@@ -22,8 +22,8 @@ lcd[0][2]=1
 # Fairly painless way to do fonts		
 def send_char(array,c,x,y): #Enter a char at location x,y using small 5x8 font
 	for w in range (5):	
-		#if (x+w <= len(array)) & (y+8 <= len(array[0])): #Boundrary checking
-		array[x+w][y:y+8] = list(format(QuickType_5x8[(ord(c)-32)*5+w], '08b'))
+		if (0 <= x+w <= 132) & (0 <= y+8 <= 32): #Boundrary checking
+			array[x+w][y:y+8] = list(format(QuickType_5x8[(ord(c)-32)*5+w], '08b'))
 		
 def send_string(array,str,x,y):
 	for i, c in enumerate (str):
@@ -56,21 +56,22 @@ def send(array,ser): #Pass an array, for updating the whole screen, slow!
 			sleep(0.03) #Fastest I can go before artefacts start to appear
 
 def update_pixel(array,x,y,val,ser): #Update a single pixel at location x,y, with either 1 or 0
-	array[x][y]= val;
-	ypose = int(floor(y/8))
-	val = ""
-	for w in range (7,-1,-1):
-		val += str(array[x][ypose*8+w])
-	command = "lcdDisp " + hex(ypose) + " " + hex(x) + " " + hex(int(val, 2)) + " \r"
-	ser.write(command)
-	#print command
-	sleep(0.03)
+	if (0 <= x <= 132) & (0 <= y <= 32):
+		array[x][y]= val;
+		ypose = int(floor(y/8))
+		val = ""
+		for w in range (7,-1,-1):
+			val += str(array[x][ypose*8+w])
+		command = "lcdDisp " + hex(ypose) + " " + hex(x) + " " + hex(int(val, 2)) + " \r"
+		ser.write(command)
+		#print command
+		sleep(0.03)
 			
 #NOTE: This will update to the upper limit of the Y page stored, as this is actually faster than limiting it to a smaller section
 def send_portion(array,xDims,yDims): # Update part of the screen, faster for small updates (~30 pixels total)
 	for y in range (yDims[0],yDims[1],2):
 		for x in range (xDims[0],xDims[1]):
-			update_pixel(array,x,y,array[x][y])
+			if (0 <= x <= 132) & (0 <= y <= 32): update_pixel(array,x,y,array[x][y])
 
 
 if __name__ == '__main__':		

@@ -7,11 +7,14 @@ import wmi
 import os 
 import psutil
 from time import strftime, time
+import urllib
+import socket
 
 from Ergo_Infinity_Display import *
 lcd = [[0 for x in range(32)] for x in range(128)] 
 
 w = wmi.WMI(namespace='root\\wmi')
+hostname = socket.gethostname()
 
 
 if __name__ == '__main__':		
@@ -24,6 +27,11 @@ if __name__ == '__main__':
 	# Keeping track of Incoming + outgoing net traffic
 	l_net = psutil.net_io_counters().bytes_recv + psutil.net_io_counters().bytes_sent
 	l_time = time()
+	
+	#Get external IP once (Not ideal....)
+	ip = urllib.urlopen('http://whatismyip.org').read() #External IP, This may need to be fixed as website changes
+	p = ip.find("font-weight: 600;")
+	ip = ip[p+19:p+34].strip('</span')
 	
 	try:
 		while True:
@@ -43,26 +51,29 @@ if __name__ == '__main__':
 				for y in range (len(lcd[0])):
 					lcd[x][y] = 0
 			
-			#Print date and time
-			send_string(lcd,strftime("%m-%d"),103,24)
-			send_string(lcd,strftime("%H:%M"),103,16)
+			
 			
 			#Show CPU, MEM, etc loading in bar graphs
 			y_t = 24
 			send_string(lcd,"CPU [", 0, y_t)
 			send_string(lcd,"]", 76, y_t)
 			send_string(lcd,"" * int(round(cpu/10)), 26, y_t) # Represent bar graph for CPU usage (total)
+			send_string(lcd,"{0:.0f}".format(temp) + "*C", 82, y_t)
 			y_t -=8
+			send_string(lcd,strftime("%m-%d"),103,y_t)#Print date and time
 			send_string(lcd,"MEM [", 0, y_t)
 			send_string(lcd,"]", 76, y_t)
 			send_string(lcd,"" * int(round(mem/10)), 26, y_t) # Represent bar graph for Mem
 			y_t -=8
+			send_string(lcd,strftime("%H:%M"),103,y_t)#Print date and time
 			send_string(lcd,"DSK [", 0, y_t)
 			send_string(lcd,"]", 76, y_t)
 			send_string(lcd,"" * int(round(disk/10)), 26, y_t) # Represent bar graph for Disk usage
 			y_t -=8
 			send_string(lcd,"NET ", 0, y_t)
-			send_string(lcd,"{0:.2f}".format(net/1048576) + " Mbps", 24, y_t)
+			send_string(lcd,"{0:.1f}".format(net/1048576) + "M", 24, y_t)
+			ip = socket.gethostbyname(hostname) # Use Local IP instead of global one source above, not reliable
+			send_string(lcd,ip.rjust(15), 53, y_t)
 			
 			send(lcd,ser) #Update LCD all at once
 			
