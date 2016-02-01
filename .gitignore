@@ -107,3 +107,8 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+.idea/workspace.xml
+.idea/encodings.xml
+*.name
+.idea/Ergo_Infinity_Display.iml
+*.xml
